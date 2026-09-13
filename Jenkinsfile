@@ -25,17 +25,21 @@ pipeline {
 
         stage('Update GitOps Repo') {
             steps {
-                sh """
-                    rm -rf gitops-repo
-                    git clone ${GITOPS_REPO} gitops-repo
-                    cd gitops-repo/base
-                    sed -i 's|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' payment-api-deployment.yaml
-                    git config user.email "jenkins@sbdp-lab.local"
-                    git config user.name "Jenkins CI"
-                    git add payment-api-deployment.yaml
-                    git commit -m "Update image to ${IMAGE_TAG}" || echo "Rien à committer"
-                    git push origin main
-                """
+                sshagent(credentials: ['gitops-ssh-key']) {
+                    sh """
+                        mkdir -p ~/.ssh
+                        ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+                        rm -rf gitops-repo
+                        git clone ${GITOPS_REPO} gitops-repo
+                        cd gitops-repo/base
+                        sed -i 's|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' payment-api-deployment.yaml
+                        git config user.email "jenkins@sbdp-lab.local"
+                        git config user.name "Jenkins CI"
+                        git add payment-api-deployment.yaml
+                        git commit -m "Update image to ${IMAGE_TAG}" || echo "Rien à committer"
+                        git push origin main
+                    """
+                }
             }
         }
     }
