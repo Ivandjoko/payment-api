@@ -30,11 +30,28 @@ pipeline {
                 script {
                     env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                 }
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                sh "kind load docker-image ${IMAGE_NAME}:${IMAGE_TAG} --name sbdp-lab"
+                sh "docker build --pull -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
+        stage('SCA - Trivy') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      -v trivy-cache:/root/.cache/ \
+                      aquasec/trivy image \
+                      --severity HIGH,CRITICAL --ignore-unfixed --no-progress --exit-code 1 \
+                      $IMAGE_NAME:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Load Image into Kind') {
+            steps {
+                sh "kind load docker-image ${IMAGE_NAME}:${IMAGE_TAG} --name sbdp-lab"
+            }
+        }
         stage('Update GitOps Repo') {
             steps {
                 sshagent(credentials: ['gitops-ssh-key']) {
