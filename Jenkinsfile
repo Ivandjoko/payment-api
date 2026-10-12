@@ -13,6 +13,18 @@ pipeline {
             }
         }
 
+        stage('SAST - Semgrep') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      --volumes-from jenkins \
+                      -w "$PWD" \
+                      semgrep/semgrep \
+                      semgrep scan --config p/python --config p/owasp-top-ten \
+                      --metrics=off --error .
+                '''
+            }
+        }  
         stage('Build Docker Image') {
             steps {
                 script {
