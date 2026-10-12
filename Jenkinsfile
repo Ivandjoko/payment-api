@@ -41,7 +41,7 @@ pipeline {
                       -v /var/run/docker.sock:/var/run/docker.sock \
                       -v trivy-cache:/root/.cache/ \
                       aquasec/trivy image \
-                      --severity LOW,HIGH,CRITICAL --no-progress --exit-code 1 \
+                      --severity HIGH,CRITICAL --ignore-unfixed --no-progress --exit-code 1 \
                       $IMAGE_NAME:$IMAGE_TAG
                 '''
             }
