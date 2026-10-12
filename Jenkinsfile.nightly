@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'TRIVY_OPTS',
+               defaultValue: '--severity HIGH,CRITICAL --ignore-unfixed',
+               description: 'Options de filtrage Trivy')
+    }
+
+    stages {
+        stage('Find deployed image') {
+            steps {
+                script {
+                    sh 'rm -rf gitops-read && git clone --depth 1 https://github.com/Ivandjoko/payment-api-gitops.git gitops-read'
+                    env.DEPLOYED_IMAGE = sh(
+                        script: "grep 'image:' gitops-read/base/payment-api-deployment.yaml | awk '{print \$2}'",
+                        returnStdout: true).trim()
+                    echo "Image déployée selon Git : ${env.DEPLOYED_IMAGE}"
+                }
+                sh 'docker image inspect "$DEPLOYED_IMAGE" > /dev/null'
+            }
+        }
+
+        stage('SCA - Trivy') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      -v trivy-cache:/root/.cache/ \
+                      aquasec/trivy image \
+                      $TRIVY_OPTS --no-progress --exit-code 1 \
+                      "$DEPLOYED_IMAGE"
+                '''
+            }
+        }
+    }
+}
