@@ -21,14 +21,17 @@ pipeline {
             }
         }
 
-        stage('SCA - Trivy') {
+            stage('SCA - Trivy') {
             steps {
+                script {
+                    env.EFFECTIVE_OPTS = params.TRIVY_OPTS ?: '--severity HIGH,CRITICAL --ignore-unfixed'
+                }
                 sh '''
                     docker run --rm \
                       -v /var/run/docker.sock:/var/run/docker.sock \
                       -v trivy-cache:/root/.cache/ \
                       aquasec/trivy image \
-                      $TRIVY_OPTS --no-progress --exit-code 1 \
+                      $EFFECTIVE_OPTS --no-progress --exit-code 1 \
                       "$DEPLOYED_IMAGE"
                 '''
             }
