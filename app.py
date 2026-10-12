@@ -14,5 +14,11 @@ def get_solde():
 def health():
     return jsonify({"status": "ok"}), 200
 
+
+# Justification : le container doit écouter sur toutes ses interfaces pour que
+# le Service Kubernetes puisse l'atteindre. L'exposition réelle est contrôlée
+# par Kubernetes (Service, NetworkPolicy) et le Security Group, pas par Flask.
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
