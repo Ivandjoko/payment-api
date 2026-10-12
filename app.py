@@ -6,7 +6,7 @@ app = Flask(__name__)
 def get_solde():
     return jsonify({
         "compte": "FR76-XXXX-XXXX-XXXX",
-        "solde": 1542.30,
+        "solde": 1000000.30,
         "devise": "EUR"
     })
 
